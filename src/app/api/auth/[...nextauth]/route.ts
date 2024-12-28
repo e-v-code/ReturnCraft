@@ -1,7 +1,9 @@
-import { type NextAuthOptions as _NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { headers } from 'next/headers'
 import { db } from '@/db'
 import { loginLogs } from '@/db/schema'
+import { users } from '@/db/schema'
 
 const handler = NextAuth({
   providers: [
@@ -11,7 +13,7 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ _error }) {
+    async signIn({ user, account }) {
       if (account?.provider === 'google') {
         try {
           // 로그인 로그 기록
@@ -43,14 +45,3 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
-
-async function _refreshAccessToken(_token: any) {
-  try {
-    // ... 함수 내용 ...
-  } catch (error) {
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    }
-  }
-}
