@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function SigninPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: ''

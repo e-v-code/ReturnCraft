@@ -9,7 +9,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ hideSignUp = false }: NavbarProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const { data: session } = useSession();
 
   const handleLogout = async () => {

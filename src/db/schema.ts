@@ -24,7 +24,6 @@ export const loginLogs = pgTable('login_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 })
 
-const schema = {
+export const schema = {
   // ... 스키마 정의
 };
-export default schema;
