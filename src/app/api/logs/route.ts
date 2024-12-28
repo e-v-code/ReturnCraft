@@ -20,8 +20,9 @@ export async function GET(request: Request) {
 
 export async function POST(_request: Request) {
   try {
-    // ... 함수 내용 ...
-  } catch (error) {
+    // 로깅 로직
+    return Response.json({ success: true });
+  } catch (_error) {
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
