@@ -23,3 +23,8 @@ export const loginLogs = pgTable('login_logs', {
   userAgent: text('user_agent').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
 })
+
+const schema = {
+  // ... 스키마 정의
+};
+export default schema;

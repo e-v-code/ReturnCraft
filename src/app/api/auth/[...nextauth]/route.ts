@@ -1,9 +1,7 @@
-import NextAuth from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { headers } from 'next/headers'
 import { db } from '@/db'
 import { loginLogs } from '@/db/schema'
-import { users } from '@/db/schema'
 
 const handler = NextAuth({
   providers: [
@@ -45,3 +43,7 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
+
+async function refreshAccessToken(_token: any) {
+  // ... 기존 코드 ...
+}
