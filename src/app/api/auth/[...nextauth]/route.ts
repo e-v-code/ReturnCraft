@@ -1,47 +1,77 @@
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import { headers } from 'next/headers'
-import { db } from '@/db'
-import { loginLogs } from '@/db/schema'
-import { users } from '@/db/schema'
+import NextAuth, { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { db } from "@/db";
+// 사용하지 않는 import 제거
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcrypt";
+import { users } from "@/db/schema";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
+  adapter: DrizzleAdapter(db),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID!,
-      clientSecret: process.env.GOOGLE_SECRET!,
-    }),
-  ],
-  callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === 'google') {
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
         try {
-          // 로그인 로그 기록
-          await db.insert(loginLogs).values({
-            email: user.email!,
-            userId: user.id
+          const foundUser = await db.query.users.findFirst({
+            where: eq(users.email, credentials.email),
           });
-        } catch (error) {
-          console.error('로그인 로그 기록 실패:', error);
+
+          if (!foundUser) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            foundUser.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: foundUser.id.toString(),
+            email: foundUser.email,
+          };
+        } catch (_error) {
+          return null;
         }
       }
-      return true;
+    })
+  ],
+  session: {
+    strategy: "jwt"
+  },
+  pages: {
+    signIn: "/signin",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+      }
+      return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        // 사용자 정보를 세션에 추가
-        const userInfo = await db.query.users.findFirst({
-          where: (users, { eq }) => eq(users.email, session.user.email!)
-        });
-        
-        if (userInfo) {
-          session.user.name = userInfo.name;
-          session.user.id = userInfo.id;
-        }
+        session.user.id = token.id;
+        session.user.email = token.email;
       }
       return session;
     }
   }
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

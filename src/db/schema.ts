@@ -1,25 +1,22 @@
-import { pgTable, serial, text, timestamp, varchar, integer } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
+import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-// UUID 확장 활성화
-sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`.execute;
-
+// 테이블 정의를 const 선언으로 변경
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  email: varchar('email', { length: 255 }).unique().notNull(),
-  emailVerified: timestamp('email_verified', { mode: 'date' }),
-  image: text('image'),
-  gender: varchar('gender', { length: 10 }).notNull(),
-  age: integer('age').notNull(),
+  email: text('email').notNull().unique(),
   password: text('password').notNull(),
-  createdAt: timestamp('created_at').defaultNow()
-})
+  createdAt: timestamp('created_at').defaultNow(),
+});
 
 export const loginLogs = pgTable('login_logs', {
   id: serial('id').primaryKey(),
-  userEmail: text('user_email').notNull(),
-  ipAddress: text('ip_address').notNull(),
-  userAgent: text('user_agent').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull()
-})
+  userId: text('user_id').notNull(),
+  loginTime: timestamp('login_time').defaultNow(),
+});
+
+// 타입 정의
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
+export type LoginLog = typeof loginLogs.$inferSelect;
+export type NewLoginLog = typeof loginLogs.$inferInsert;
