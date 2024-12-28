@@ -18,6 +18,8 @@ export const users = pgTable('users', {
 
 export const loginLogs = pgTable('login_logs', {
   id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  loginTime: timestamp('login_time').defaultNow(),
   userEmail: text('user_email').notNull(),
   ipAddress: text('ip_address').notNull(),
   userAgent: text('user_agent').notNull(),

@@ -44,6 +44,6 @@ const handler = NextAuth({
 
 export { handler as GET, handler as POST };
 
-async function refreshAccessToken(_token: any) {
+async function _refreshAccessToken(_token: any) {
   // ... 함수 내용 ...
 }

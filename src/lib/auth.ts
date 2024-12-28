@@ -77,14 +77,14 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ _profile, ...rest }) {
+    async jwt({ token, _profile }) {
       if (rest.user) {
         return {
           ...rest.token,
           id: rest.user.id,
         };
       }
-      return rest.token;
+      return token;
     },
     async session({ session, token }) {
       return {
