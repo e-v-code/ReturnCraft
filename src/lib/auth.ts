@@ -78,12 +78,6 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, _profile }) {
-      if (rest.user) {
-        return {
-          ...rest.token,
-          id: rest.user.id,
-        };
-      }
       return token;
     },
     async session({ session, token }) {

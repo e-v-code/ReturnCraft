@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, varchar, integer } from 'drizzle-orm/pg-core'
+import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // UUID 확장 활성화

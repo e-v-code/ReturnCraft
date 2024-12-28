@@ -19,5 +19,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(_request: Request) {
-  // ... 함수 내용 ...
+  try {
+    // ... 함수 내용 ...
+  } catch (error) {
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
