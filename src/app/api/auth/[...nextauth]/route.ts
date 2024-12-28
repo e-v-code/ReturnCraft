@@ -1,7 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/db";
-// 사용하지 않는 import 제거
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -43,7 +42,8 @@ export const authOptions: NextAuthOptions = {
             id: foundUser.id.toString(),
             email: foundUser.email,
           };
-        } catch (_error) {
+        } catch {
+          // _error 매개변수 제거하고 빈 catch 블록 사용
           return null;
         }
       }
