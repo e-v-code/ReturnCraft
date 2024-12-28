@@ -78,6 +78,12 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, _profile }) {
+      if (token) {
+        return {
+          ...token,
+          customField: 'value'
+        };
+      }
       return token;
     },
     async session({ session, token }) {

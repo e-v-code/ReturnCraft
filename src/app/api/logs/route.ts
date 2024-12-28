@@ -20,9 +20,10 @@ export async function GET(request: Request) {
 
 export async function POST(_request: Request) {
   try {
-    // 로깅 로직
-    return Response.json({ success: true });
+    const body = await _request.json();
+    return Response.json({ success: true, data: body });
   } catch (_error) {
+    console.error('Error in logs API:', _error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
