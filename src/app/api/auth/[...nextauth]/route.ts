@@ -11,7 +11,7 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ _error }) {
       if (account?.provider === 'google') {
         try {
           // 로그인 로그 기록

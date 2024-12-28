@@ -3,7 +3,7 @@ import { db } from '@/db'
 import { loginLogs } from '@/db/schema'
 import { desc } from 'drizzle-orm'
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const logs = await db.query.loginLogs.findMany({
       orderBy: [desc(loginLogs.createdAt)]

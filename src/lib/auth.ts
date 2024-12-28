@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ _profile }) {
       if (account?.provider === "google") {
         try {
           // 구글 로그인 시 사용자 정보가 DB에 없으면 생성
