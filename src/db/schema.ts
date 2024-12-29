@@ -1,6 +1,5 @@
 import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-// 테이블 정의를 const 선언으로 변경
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
