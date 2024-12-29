@@ -54,22 +54,16 @@ export async function POST(request: Request) {
 
     const hashedPassword = await hash(password, 10);
 
-    const [newUser] = await db.insert(users)
+    const newUser = await db.insert(users)
       .values({
         email,
         password: hashedPassword,
         name,
         gender,
         age,
-        created_at: new Date(
-          new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })
-        ),
       })
-      .returning({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-      });
+      .returning()
+      .then(rows => rows[0]);
 
     // 세션 생성
     const session = await getServerSession(authOptions);
@@ -78,7 +72,11 @@ export async function POST(request: Request) {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
-      };
+      } as {
+        id: number
+        email: string
+        name: string
+      }
     }
 
     return NextResponse.json(

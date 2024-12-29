@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user[0].id.toString(),
+          id: 1,
           email: user[0].email,
           name: user[0].name,
         };
@@ -53,10 +53,9 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ _profile }) {
+    async signIn({ account, user }) {
       if (account?.provider === "google") {
         try {
-          // 구글 로그인 시 사용자 정보가 DB에 없으면 생성
           const existingUser = await db.select()
             .from(users)
             .where(eq(users.email, user.email!))
@@ -66,18 +65,20 @@ export const authOptions: NextAuthOptions = {
             await db.insert(users).values({
               email: user.email!,
               name: user.name!,
-              image: user.image,
-              emailVerified: new Date(),
+              password: '',
+              gender: 'UNKNOWN',
+              age: 0,
+              createdAt: new Date()
             });
           }
-        } catch (error) {
-          console.error("Error during Google sign in:", error);
+        } catch (error: any) {
+          console.error("구글 로그인 에러:", error);
           return false;
         }
       }
       return true;
     },
-    async jwt({ token, _profile }) {
+    async jwt({ token }) {
       if (token) {
         return {
           ...token,

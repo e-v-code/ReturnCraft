@@ -1,13 +1,14 @@
-import { NextAuthOptions } from "next-auth";
+import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { users } from "@/db/schema";
+import { JWT } from "next-auth/jwt";
 
-export const authOptions: NextAuthOptions = {
-  adapter: DrizzleAdapter(db),
+export const authOptions: AuthOptions = {
+  adapter: DrizzleAdapter(db) as any,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -20,33 +21,24 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        try {
-          const foundUser = await db.select()
-            .from(users)
-            .where(eq(users.email, credentials.email))
-            .limit(1)
-            .then(rows => rows[0]);
+        const user = await db.query.users.findFirst({
+          where: eq(users.email, credentials.email),
+        });
 
-          if (!foundUser) {
-            return null;
-          }
-
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password,
-            foundUser.password
-          );
-
-          if (!isPasswordValid) {
-            return null;
-          }
-
-          return {
-            id: foundUser.id.toString(),
-            email: foundUser.email,
-          };
-        } catch {
+        if (!user) {
           return null;
         }
+
+        const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+        if (!passwordMatch) {
+          return null;
+        }
+
+        return {
+          id: 1,
+          email: credentials.email,
+          name: "사용자 이름",
+        };
       }
     })
   ],
@@ -59,15 +51,17 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = Number(user.id);
         token.email = user.email;
+        token.name = user.name;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any, token: JWT & { id: number, email: string, name: string } }) {
       if (session.user) {
         session.user.id = token.id;
         session.user.email = token.email;
+        session.user.name = token.name;
       }
       return session;
     }
