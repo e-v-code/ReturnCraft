@@ -4,11 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 
-interface NavbarProps {
-  hideSignUp?: boolean;
-}
-
-export default function Navbar({ hideSignUp = false }: NavbarProps) {
+export default function Navbar() {
   const _router = useRouter();
   const { data: session } = useSession();
 
