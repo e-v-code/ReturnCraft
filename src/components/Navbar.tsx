@@ -21,12 +21,11 @@ export default function Navbar({ hideSignUp = false }: NavbarProps) {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="text-xl font-bold text-blue-400 hover:text-blue-300">
-            ReturnCraft
+            MGTECH
           </Link>
           
           <div className="flex items-center space-x-4">
             {session?.user ? (
-              // 로그인 상태
               <div className="flex items-center space-x-4">
                 <span className="text-white">
                   {session.user.name}님 환영합니다
@@ -39,17 +38,12 @@ export default function Navbar({ hideSignUp = false }: NavbarProps) {
                 </button>
               </div>
             ) : (
-              // 비로그인 상태
-              <div className="flex items-center space-x-4">
-                {!hideSignUp && (
-                  <Link href="/signup" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-                    회원가입
-                  </Link>
-                )}
-                <Link href="/signin" className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition-colors">
-                  로그인
-                </Link>
-              </div>
+              <Link 
+                href="/apply" 
+                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors font-semibold"
+              >
+                접수하기
+              </Link>
             )}
           </div>
         </div>
