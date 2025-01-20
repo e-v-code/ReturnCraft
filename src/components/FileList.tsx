@@ -21,16 +21,28 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
   const loadFileList = async () => {
     try {
       setLoading(true);
+      console.log('파일 목록 불러오기 시작');
+      
       const response = await fetch('/api/content');
+      console.log('API 응답:', response);
       
       if (response.ok) {
         const data = await response.json();
-        if (Array.isArray(data.files)) {
+        console.log('받은 데이터:', data);
+        
+        if (data.files && Array.isArray(data.files)) {
           setFiles(data.files);
+        } else {
+          console.error('files 데이터가 없거나 배열이 아님:', data);
+          setFiles([]);
         }
+      } else {
+        console.error('API 응답 실패:', response.status);
+        setFiles([]);
       }
     } catch (error) {
       console.error('파일 목록 로드 중 오류:', error);
+      setFiles([]);
     } finally {
       setLoading(false);
     }
@@ -39,13 +51,22 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
   // 파일 내용 불러오기
   const handleLoadFile = async (fileName: string) => {
     try {
+      // txt 파일인 경우에만 불러오기 기능 활성화
+      if (!fileName.toLowerCase().endsWith('.txt')) {
+        alert('텍스트 파일(.txt)만 불러올 수 있습니다.');
+        return;
+      }
+
       const response = await fetch(`/api/content?fileName=${fileName}`);
       if (response.ok) {
         const data = await response.json();
-        onFileLoad(data.content);
+        onFileLoad(data.content); // 에디터 박스에 내용 설정
         alert('파일 내용을 불러왔습니다.');
+      } else {
+        alert('파일을 불러올 수 없습니다.');
       }
     } catch (error) {
+      console.error('파일 불러오기 중 오류:', error);
       alert('파일 불러오기 중 오류가 발생했습니다.');
     }
   };
@@ -79,6 +100,7 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
 
   // 컴포넌트 마운트 시와 파일 업로드 시 목록 새로고침
   useEffect(() => {
+    console.log('useEffect 실행 - uploadCount:', onFileUpload);
     loadFileList();
   }, [onFileUpload]);
 
@@ -108,12 +130,14 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
                 </p>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleLoadFile(file.name)}
-                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  불러오기
-                </button>
+                {file.name.toLowerCase().endsWith('.txt') && (
+                  <button
+                    onClick={() => handleLoadFile(file.name)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    불러오기
+                  </button>
+                )}
                 <button
                   onClick={() => handleDownload(file.name)}
                   className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
