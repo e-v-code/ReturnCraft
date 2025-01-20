@@ -1,119 +1,113 @@
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
-import path from 'path';
-import { existsSync } from 'fs';
 
-const FILE_NAME = 'code.txt';
-const DIR_PATH = path.join(process.cwd(), 'public', 'contents');
-const FILE_PATH = path.join(DIR_PATH, FILE_NAME);
-
-
-// 파일 저장 (덮어쓰기)
-export async function POST(request: Request) {
-    try {
-      const { content } = await request.json();
-      
-      // contents 디렉토리가 없으면 생성
-      if (!existsSync(DIR_PATH)) {
-        await mkdir(DIR_PATH, { recursive: true });
-      }
-      
-      // 파일을 덮어씌움
-      await writeFile(FILE_PATH, content, 'utf-8');
-      return NextResponse.json({ message: '저장되었습니다.' });
-    } catch (error) {
-      console.error('파일 저장 오류:', error);
-      return NextResponse.json(
-        { error: '저장 중 오류가 발생했습니다.' }, 
-        { status: 500 }
-      );
-    }
-  }
-  
-
-// 파일 읽기
-export async function GET() {
-    try {
-      // 디렉토리가 없으면 생성
-      if (!existsSync(DIR_PATH)) {
-        await mkdir(DIR_PATH, { recursive: true });
-      }
-  
-      if (!existsSync(FILE_PATH)) {
-        return NextResponse.json(
-          { error: '저장된 내용이 없습니다.' },
-          { status: 404 }
-        );
-      }
-  
-      const content = await readFile(FILE_PATH, 'utf-8');
-      return NextResponse.json({ content });
-    } catch (error) {
-      console.error('파일 읽기 오류:', error);
-      return NextResponse.json(
-        { error: '불러오기 중 오류가 발생했습니다.' },
-        { status: 500 }
-      );
-    }
-  }
-
-// 파일 삭제
-export async function DELETE() {
-    try {
-      if (!existsSync(FILE_PATH)) {
-        return NextResponse.json(
-          { error: '삭제할 파일이 없습니다.' }, 
-          { status: 404 }
-        );
-      }
-      await unlink(FILE_PATH);
-      return NextResponse.json({ message: '삭제되었습니다.' });
-    } catch (error) {
-      console.error('파일 삭제 오류:', error);
-      return NextResponse.json(
-        { error: '삭제 중 오류가 발생했습니다.' }, 
-        { status: 500 }
-      );
-    }
-  }
-
-export async function PUT(request: Request) {
+// 테이블 생성 함수
+async function createTableIfNotExists() {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const client = await db.connect();
+    await client.sql`
+      CREATE TABLE IF NOT EXISTS editor_contents (
+        id SERIAL PRIMARY KEY,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    client.release();
+    console.log('테이블 생성 완료 또는 이미 존재함');
+  } catch (error) {
+    console.error('테이블 생성 오류:', error);
+    throw error;
+  }
+}
+
+export async function POST(request: Request) {
+  let client;
+  try {
+    const { content } = await request.json();
     
-    if (!file) {
-      return NextResponse.json({ error: '파일이 없습니다.' }, { status: 400 });
+    if (!content) {
+      return NextResponse.json(
+        { error: '내용이 비어있습니다.' },
+        { status: 400 }
+      );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // 테이블이 없다면 생성
+    await createTableIfNotExists();
     
-    // 원본 파일 이름 유지하면서 타임스탬프 추가
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `${timestamp}-${file.name}`;
-    const filePath = path.join(process.cwd(), 'public', 'contents', fileName);
+    // 새로운 내용 저장
+    client = await db.connect();
+    const result = await client.sql`
+      INSERT INTO editor_contents (message)
+      VALUES (${content})
+      RETURNING id;
+    `;
 
-    await writeFile(filePath, buffer);
-    
-    // 텍스트 파일인 경우 내용 반환
-    if (file.type === 'text/plain') {
-      const content = buffer.toString('utf-8');
-      return NextResponse.json({ 
-        message: '파일이 업로드되었습니다.',
-        fileName,
-        content 
-      });
-    }
+    console.log('저장 완료:', result);
 
     return NextResponse.json({ 
-      message: '파일이 업로드되었습니다.',
-      fileName 
+      message: '저장되었습니다.',
+      id: result.rows[0].id 
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('저장 오류 상세:', error);
     return NextResponse.json(
-      { error: '파일 업로드 중 오류가 발생했습니다.' },
+      { error: '저장 중 오류가 발생했습니다: ' + (error?.message || '알 수 없는 오류') },
       { status: 500 }
     );
+  } finally {
+    if (client) client.release();
   }
-} 
+}
+
+export async function GET() {
+    let client;
+    try {
+      await createTableIfNotExists();
+      
+      client = await db.connect();
+      const result = await client.sql`
+        SELECT id, message, created_at
+        FROM editor_contents
+        ORDER BY created_at DESC;
+      `;
+  
+      return NextResponse.json({ 
+        contents: result.rows
+      });
+    } catch (error: any) {
+      console.error('불러오기 오류 상세:', error);
+      return NextResponse.json(
+        { error: '불러오기 중 오류가 발생했습니다: ' + (error?.message || '알 수 없는 오류') },
+        { status: 500 }
+      );
+    } finally {
+      if (client) client.release();
+    }
+  }
+  
+  export async function DELETE(request: Request) {
+    let client;
+    try {
+      const { id } = await request.json();
+      
+      client = await db.connect();
+      await client.sql`
+        DELETE FROM editor_contents
+        WHERE id = ${id};
+      `;
+  
+      return NextResponse.json({ 
+        message: '삭제되었습니다.'
+      });
+    } catch (error: any) {
+      console.error('삭제 오류 상세:', error);
+      return NextResponse.json(
+        { error: '삭제 중 오류가 발생했습니다: ' + (error?.message || '알 수 없는 오류') },
+        { status: 500 }
+      );
+    } finally {
+      if (client) client.release();
+    }
+  
+}
