@@ -98,8 +98,13 @@ export default function Home() {
     }
   };
 
-  // handleDeleteAll 함수 추가
-  const handleDeleteAll = async () => {
+  // handleDeleteAll 함수 수정
+  const handleDeleteAll = async (e: React.MouseEvent | KeyboardEvent) => {
+    // 스페이스바 키 이벤트가 아닌 경우에만 확인
+    if (e.type === 'keydown' && (e as KeyboardEvent).code !== 'Space') {
+      return;
+    }
+
     if (!window.confirm('모든 메시지를 삭제하시겠습니까?')) {
       return;
     }
@@ -159,7 +164,9 @@ export default function Home() {
             </button>
             <button
               onClick={handleDeleteAll}
+              onKeyDown={handleDeleteAll}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              tabIndex={0} // 키보드 포커스 가능하도록 설정
             >
               모두 삭제
             </button>
