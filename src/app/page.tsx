@@ -98,17 +98,47 @@ export default function Home() {
     }
   };
 
+  // handleDeleteAll 함수 추가
+  const handleDeleteAll = async () => {
+    if (!window.confirm('모든 메시지를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/content/all', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('전체 삭제에 실패했습니다.');
+      }
+
+      await loadContents(); // 목록 새로고침
+    } catch (error) {
+      console.error('전체 삭제 오류:', error);
+    }
+  };
+
+  // handleKeyDown 함수 추가
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault(); // 기본 동작 방지
+      handleSave();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-2xl font-bold mb-4">에디터</h1>
+        <h1 className="text-2xl font-bold mb-4">Return</h1>
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="mb-4">
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="w-full h-64 p-2 border rounded"
-              placeholder="내용을 입력하세요..."
+              placeholder="(Ctrl + Enter)"
             />
           </div>
           <div className="flex gap-2">
@@ -127,38 +157,47 @@ export default function Home() {
             >
               {saving ? '저장 중...' : '저장하기'}
             </button>
+            <button
+              onClick={handleDeleteAll}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              모두 삭제
+            </button>
           </div>
         </div>
 
         {/* 저장된 메시지 목록 */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">저장된 메시지 목록</h2>
+          <h2 className="text-xl font-bold mb-4">목록</h2>
           <div className="space-y-4">
             {contents.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded">
-                <div className="flex-1">
-                  <p className="mb-2">{item.message}</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(item.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex gap-2">
+              <div key={item.id} className="relative p-4 bg-gray-50 rounded">
+                <div className="absolute top-2 right-2 flex gap-2">
                   <button
                     onClick={() => handleCopy(item.message, item.id)}
                     className={`px-3 py-1 ${
                       copiedId === item.id
                         ? 'bg-green-500 hover:bg-green-600'
                         : 'bg-blue-500 hover:bg-blue-600'
-                    } text-white rounded transition-colors`}
+                    } text-white rounded transition-colors text-sm`}
                   >
                     {copiedId === item.id ? '복사됨!' : '복사'}
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
                   >
                     삭제
                   </button>
+                </div>
+                <div 
+                  className="pt-8 cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors"
+                  onClick={() => handleCopy(item.message, item.id)}
+                >
+                  <p className="mb-2">{item.message}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(item.created_at).toLocaleString()}
+                  </p>
                 </div>
               </div>
             ))}
