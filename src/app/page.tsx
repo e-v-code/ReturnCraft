@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ConfirmPopup from '@/components/ConfirmPopup';
 
 interface Content {
   id: number;
@@ -13,6 +14,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [contents, setContents] = useState<Content[]>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // 목록 불러오기
   const loadContents = async () => {
@@ -99,16 +101,7 @@ export default function Home() {
   };
 
   // handleDeleteAll 함수 수정
-  const handleDeleteAll = async (e: React.MouseEvent | KeyboardEvent) => {
-    // 스페이스바 키 이벤트가 아닌 경우에만 확인
-    if (e.type === 'keydown' && (e as KeyboardEvent).code !== 'Space') {
-      return;
-    }
-
-    if (!window.confirm('모든 메시지를 삭제하시겠습니까?')) {
-      return;
-    }
-
+  const handleDeleteAll = async () => {
     try {
       const response = await fetch('/api/content/all', {
         method: 'DELETE',
@@ -118,7 +111,8 @@ export default function Home() {
         throw new Error('전체 삭제에 실패했습니다.');
       }
 
-      await loadContents(); // 목록 새로고침
+      await loadContents();
+      setIsConfirmOpen(false);
     } catch (error) {
       console.error('전체 삭제 오류:', error);
     }
@@ -163,10 +157,8 @@ export default function Home() {
               {saving ? '저장 중...' : '저장하기'}
             </button>
             <button
-              onClick={handleDeleteAll}
-              onKeyDown={handleDeleteAll}
+              onClick={() => setIsConfirmOpen(true)}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-              tabIndex={0} // 키보드 포커스 가능하도록 설정
             >
               모두 삭제
             </button>
@@ -213,6 +205,12 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        <ConfirmPopup
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={handleDeleteAll}
+        />
       </div>
     </div>
   );
