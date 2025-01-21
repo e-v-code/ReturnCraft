@@ -130,7 +130,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-2xl font-bold mb-4">Return</h1>
+        <h1 className="text-2xl font-bold mb-4"></h1>
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="mb-4">
             <textarea
@@ -168,7 +168,7 @@ export default function Home() {
 
         {/* 저장된 메시지 목록 */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">목록</h2>
+          <h2 className="text-xl font-bold mb-4"></h2>
           <div className="space-y-4">
             {contents.map((item) => (
               <div key={item.id} className="relative p-4 bg-gray-50 rounded">
