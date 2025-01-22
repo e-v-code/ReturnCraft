@@ -72,32 +72,68 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
   };
 
   // 파일 다운로드
-  const handleDownload = (fileName: string) => {
-    const link = document.createElement('a');
-    link.href = `/contents/${fileName}`;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (fileName: string) => {
+    try {
+      const response = await fetch(`/api/content/download/${encodeURIComponent(fileName)}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '파일 다운로드 실패');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('파일 다운로드 오류:', error);
+      alert('파일 다운로드 중 오류가 발생했습니다.');
+    }
   };
 
   // 파일 삭제
-  const handleDeleteFile = async (fileName: string) => {
-    if (!confirm('정말 이 파일을 삭제하시겠습니까?')) return;
+  const handleDeleteFile = async (id: number, filename: string) => {
+    if (!confirm(`${filename} 파일을 삭제하시겠습니까?`)) return;
 
     try {
-      const response = await fetch(`/api/content/files/${encodeURIComponent(fileName)}`, {
+      const response = await fetch(`/api/content/files/${encodeURIComponent(filename)}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
-        throw new Error('파일 삭제 실패');
+        const errorData = await response.json();
+        throw new Error(errorData.error || '파일 삭제 실패');
       }
       
-      await loadFileList();
+      await loadFileList(); // 파일 목록 새로고침
       alert('파일이 삭제되었습니다.');
     } catch (error) {
       console.error('파일 삭제 오류:', error);
+      alert('파일 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleDeleteAllFiles = async () => {
+    if (!confirm('모든 파일을 삭제하시겠습니까?')) return;
+
+    try {
+      const response = await fetch('/api/content/files/all', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('파일 전체 삭제 실패');
+      }
+      
+      await loadFileList(); // 파일 목록 새로고침
+      alert('모든 파일이 삭제되었습니다.');
+    } catch (error) {
+      console.error('파일 전체 삭제 오류:', error);
       alert('파일 삭제 중 오류가 발생했습니다.');
     }
   };
@@ -116,12 +152,20 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
     <div className="mt-4 p-4 border rounded-lg">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">파일 목록</h3>
-        <button
-          onClick={loadFileList}
-          className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-        >
-          새로고침
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={loadFileList}
+            className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            새로고침
+          </button>
+          <button
+            onClick={handleDeleteAllFiles}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            전체 삭제
+          </button>
+        </div>
       </div>
       <div className="space-y-2">
         {files.length > 0 ? (
@@ -149,7 +193,7 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
                   다운로드
                 </button>
                 <button
-                  onClick={() => handleDeleteFile(file.name)}
+                  onClick={() => handleDeleteFile(0, file.name)}
                   className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   삭제

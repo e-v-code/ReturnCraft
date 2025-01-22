@@ -6,8 +6,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // URL 디코딩
+    const decodedId = decodeURIComponent(params.id);
+    
     // 파일 존재 여부 확인
-    const blob = await head(params.id);
+    const blob = await head(decodedId);
     if (!blob) {
       return NextResponse.json(
         { error: '파일을 찾을 수 없습니다.' },
@@ -16,7 +19,7 @@ export async function DELETE(
     }
 
     // 파일 삭제
-    await del(params.id);
+    await del(decodedId);
     
     return NextResponse.json({ 
       message: '파일이 삭제되었습니다.'

@@ -203,10 +203,13 @@ export default function Home() {
   };
 
   // 파일 다운로드 함수
-  const handleDownload = async (id: number, filename: string) => {
+  const handleDownload = async (id: string, filename: string) => {
     try {
-      const response = await fetch(`/api/content/download/${id}`);
-      if (!response.ok) throw new Error('파일 다운로드 실패');
+      const response = await fetch(`/api/content/download/${encodeURIComponent(filename)}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '파일 다운로드 실패');
+      }
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -402,7 +405,7 @@ export default function Home() {
                 <span>{file.name}</span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleDownload(file.id, file.name)}
+                    onClick={() => handleDownload(file.id.toString(), file.name)}
                     className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
                   >
                     Download
