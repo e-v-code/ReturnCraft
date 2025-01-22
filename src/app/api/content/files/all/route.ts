@@ -1,11 +1,10 @@
-import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { list, del } from '@vercel/blob';
 
 export async function DELETE() {
-  let client;
   try {
-    client = await db.connect();
-    await client.sql`TRUNCATE TABLE file_contents;`;
+    const { blobs } = await list();
+    await Promise.all(blobs.map(blob => del(blob.pathname)));
     
     return NextResponse.json({ 
       message: '모든 파일이 삭제되었습니다.'
@@ -16,7 +15,5 @@ export async function DELETE() {
       { error: '파일 삭제 중 오류가 발생했습니다.' },
       { status: 500 }
     );
-  } finally {
-    if (client) client.release();
   }
 } 
