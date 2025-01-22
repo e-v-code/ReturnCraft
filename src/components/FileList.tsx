@@ -86,14 +86,18 @@ export default function FileList({ onFileLoad, onFileUpload }: FileListProps) {
     if (!confirm('정말 이 파일을 삭제하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`/api/content?fileName=${fileName}`, {
+      const response = await fetch(`/api/content/files/${encodeURIComponent(fileName)}`, {
         method: 'DELETE',
       });
-      if (response.ok) {
-        await loadFileList();
-        alert('파일이 삭제되었습니다.');
+      
+      if (!response.ok) {
+        throw new Error('파일 삭제 실패');
       }
+      
+      await loadFileList();
+      alert('파일이 삭제되었습니다.');
     } catch (error) {
+      console.error('파일 삭제 오류:', error);
       alert('파일 삭제 중 오류가 발생했습니다.');
     }
   };

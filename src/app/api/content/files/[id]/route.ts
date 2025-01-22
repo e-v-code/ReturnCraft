@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
-import { del } from '@vercel/blob';
+import { del, head } from '@vercel/blob';
 
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    // 파일 존재 여부 확인
+    const blob = await head(params.id);
+    if (!blob) {
+      return NextResponse.json(
+        { error: '파일을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 파일 삭제
     await del(params.id);
+    
     return NextResponse.json({ 
       message: '파일이 삭제되었습니다.'
     });
